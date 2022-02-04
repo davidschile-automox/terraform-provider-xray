@@ -37,6 +37,12 @@ func Provider() *schema.Provider {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 				Description:      "This is a bearer token that can be given to you by your admin under `Identity and Access`",
 			},
+			"check_license": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Toggle for pre-flight checking of Artifactory Enterprise license. Default to `true`.",
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -115,9 +121,12 @@ func providerConfigure(d *schema.ResourceData, terraformVersion string) (interfa
 		return nil, err
 	}
 
-	err = checkArtifactoryLicense(restyBase)
-	if err != nil {
-		return nil, err
+	checkLicense := d.Get("check_license").(bool)
+	if checkLicense {
+		err = checkArtifactoryLicense(restyBase)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return restyBase, nil
